@@ -17,14 +17,26 @@ class ContactsViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'])
     def getMyContacts(self, request):
-        id = request.query_params.get('id', None)
-        if id is None:
+        user_id = request.query_params.get('id', None)
+        if user_id is None:
             return Response({'error': 'No está registrado'}, status=status.HTTP_400_BAD_REQUEST)
 
-        contacts = Contacts.objects.filter(user_id=id)
-        if contacts.exists():
-            serializer = ContactsSerializer(contacts, many=True)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        contacts = Contacts.objects.filter(user_id=user_id)
+
+        contact_data = []
+        for contact in contacts:
+            last_message = Messages.objects.filter(
+                receiver_id=contact.contact_id, sender_id=user_id
+            ).order_by('-timestamp').first()
+
+            contact_info = {
+                'contact': ContactsSerializer(contact).data,
+                'last_message': MessagesSerializer(last_message).data if last_message else None
+            }
+            contact_data.append(contact_info)
+
+        if contact_data:
+            return Response(contact_data, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'No tiene contactos'}, status=status.HTTP_204_NO_CONTENT)
 
