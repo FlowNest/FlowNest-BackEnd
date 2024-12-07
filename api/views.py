@@ -15,6 +15,19 @@ class ContactsViewSet(viewsets.ModelViewSet):
     queryset = Contacts.objects.all()
     serializer_class = ContactsSerializer
 
+    @action(detail=False, methods=['get'])
+    def getMyContacts(self, request):
+        id = request.query_params.get('id', None)
+        if id is None:
+            return Response({'error': 'No está registrado'}, status=status.HTTP_400_BAD_REQUEST)
+
+        contacts = Contacts.objects.filter(user_id=id)
+        if contacts.exists():
+            serializer = ContactsSerializer(contacts, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'No tiene contactos'}, status=status.HTTP_204_NO_CONTENT)
+
 
 class DeletedMessagesViewSet(viewsets.ModelViewSet):
     queryset = DeletedMessages.objects.all()
