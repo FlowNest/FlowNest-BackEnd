@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.utils.timezone import localtime
 from django.utils import timezone
@@ -74,7 +75,6 @@ class Messages(models.Model):
     is_deleted = models.IntegerField(blank=True, null=True)
     media_url = models.CharField(max_length=255, blank=True, null=True)
     is_group_message = models.IntegerField(blank=False, null=False, default=0)
-    encryption_key = models.CharField(max_length=16, blank=True, null=True, default="cifradoaes202425")
 
     class Meta:
         managed = False
@@ -87,11 +87,10 @@ class Messages(models.Model):
 
         if self.content and not self.content.isspace():
             # Solo cifrar si el contenido no está vacío o solo tiene espacios
-            self.encryption_key = self.encryption_key or "cifradoaes202425"
-            self.content = cifrar_mensaje(self.content, self.encryption_key)
+            encryption_key = settings.ENCRYPTION_KEY  # Toma la clave desde settings
+            self.content = cifrar_mensaje(self.content, encryption_key)
 
         super().save(*args, **kwargs)
-
     
 class Sessions(models.Model):
     user = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True)
