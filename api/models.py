@@ -1,5 +1,9 @@
 from django.db import models
+from django.utils.timezone import localtime
+from django.utils import timezone
 
+
+from .aes import cifrar_mensaje
 
 class Calls(models.Model):
     caller = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True)
@@ -63,20 +67,32 @@ class Groups(models.Model):
 class Messages(models.Model):
     sender = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True)
     receiver_id = models.IntegerField(blank=True, null=True)
-    content = models.TextField(blank=True, null=True)
+    content = models.TextField(blank=True, null=False)
     message_type = models.CharField(max_length=20, blank=True, null=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
+    timestamp = models.DateTimeField(blank=True, null=True, auto_now_add=True)
     status = models.CharField(max_length=20, blank=True, null=True)
     is_deleted = models.IntegerField(blank=True, null=True)
     media_url = models.CharField(max_length=255, blank=True, null=True)
-    is_group_message = models.IntegerField(blank=True, null=True)
-    encryption_key = models.CharField(max_length=255, blank=True, null=True)
+    is_group_message = models.IntegerField(blank=False, null=False, default=0)
+    encryption_key = models.CharField(max_length=16, blank=True, null=True, default="cifradoaes202425")
 
     class Meta:
         managed = False
         db_table = 'messages'
 
+    def save(self, *args, **kwargs):
+        # Establecer la hora local antes de guardar el mensaje
+        if not self.timestamp:  # Si no hay timestamp asignado, usar la hora local
+            self.timestamp = localtime(timezone.now())  # Esto convierte la hora UTC a la hora local
 
+        if self.content and not self.content.isspace():
+            # Solo cifrar si el contenido no está vacío o solo tiene espacios
+            self.encryption_key = self.encryption_key or "cifradoaes202425"
+            self.content = cifrar_mensaje(self.content, self.encryption_key)
+
+        super().save(*args, **kwargs)
+
+    
 class Sessions(models.Model):
     user = models.ForeignKey('Users', models.DO_NOTHING, blank=True, null=True)
     session_token = models.CharField(max_length=255, blank=True, null=True)

@@ -36,12 +36,13 @@ class MessagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = Messages
         fields = '__all__'
-
-
+        
 class SessionsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Sessions
         fields = '__all__'
+
+
 
 
 class StatusViewsSerializer(serializers.ModelSerializer):
