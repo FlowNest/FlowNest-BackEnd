@@ -65,6 +65,22 @@ class MessagesViewSet(viewsets.ModelViewSet):
     
     
 
+    @action(detail=False, methods=['get'])
+    def getMessagesContact(self, request):
+        sender_id = request.query_params.get('sender', None)
+        receiver_id = request.query_params.get('receiver', None)
+
+        if sender_id is None or receiver_id is None:
+            return Response({'error': 'No identificado'}, status=status.HTTP_400_BAD_REQUEST)
+
+        messages = Messages.objects.filter(receiver_id=receiver_id, sender_id=sender_id)
+
+        if messages.exists():
+            serialized_messages = self.serializer_class(messages, many=True)
+            return Response(serialized_messages.data, status=status.HTTP_200_OK)
+        else:
+            return Response({'error': 'No tiene contactos'}, status=status.HTTP_204_NO_CONTENT)
+
 
 class SessionsViewSet(viewsets.ModelViewSet):
     queryset = Sessions.objects.all()
