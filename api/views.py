@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
-
+from django.db.models import Q
 
 
 class CallsViewSet(viewsets.ModelViewSet):
@@ -28,7 +28,8 @@ class ContactsViewSet(viewsets.ModelViewSet):
         contact_data = []
         for contact in contacts:
             last_message = Messages.objects.filter(
-                receiver_id=contact.contact_id, sender_id=user_id
+                Q(sender_id=user_id, receiver_id=contact.contact_id) |
+                Q(sender_id=contact.contact_id, receiver_id=user_id)
             ).order_by('-timestamp').first()
 
             contact_info = {
