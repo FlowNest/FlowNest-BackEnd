@@ -136,14 +136,14 @@ def consultar_mix2(valor_hex):
     valor = int(valor_hex, 16)
     fila = valor >> 4
     columna = valor & 0x0F
-    resultado = aes_sbox[fila][columna]
+    resultado = mix_columns_matriz_2[fila][columna]
     return f"{resultado:02x}"
 
 def consultar_mix3(valor_hex):
     valor = int(valor_hex, 16)
     fila = valor >> 4
     columna = valor & 0x0F
-    resultado = aes_sbox[fila][columna]
+    resultado = mix_columns_matriz_3[fila][columna]
     return f"{resultado:02x}"
 
 def obtenerMixColumns(matrices_shiftRows, matrizPeso):

@@ -6,7 +6,9 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.utils import timezone
 from django.db.models import Q
+from django.conf import settings
 
+from api import aes
 
 class CallsViewSet(viewsets.ModelViewSet):
     queryset = Calls.objects.all()
@@ -102,11 +104,34 @@ class UsersViewSet(viewsets.ModelViewSet):
     queryset = Users.objects.all()
     serializer_class = UsersSerializer
 
+    def perform_create(self, serializer):
+        password = self.request.data.get('password_hash')
+        
+        if password:
+            password_hash_encriptado = aes.cifrar_mensaje(password, settings.ENCRYPTION_KEY)
+            serializer.save(password_hash=password_hash_encriptado)
+        else:
+            serializer.save()
+
+    def create(self, request, *args, **kwargs):
+        # Aquí obtenemos el serializer con los datos de la solicitud
+        serializer = self.get_serializer(data=request.data)
+        
+        # Verificamos si los datos son válidos
+        if serializer.is_valid():
+            self.perform_create(serializer)  # Guardamos el objeto
+            return Response({"status": "success"}, status=status.HTTP_201_CREATED)
+        else:
+            # Si no son válidos, devolvemos los errores en la respuesta
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
     @action(detail=False, methods=['get'])
     def login(self, request):
         phone = request.query_params.get('phone', None)
         password = request.query_params.get('password', None)
-        user = Users.objects.filter(phone_number=phone, password_hash=password).first()
+        password_hash = aes.cifrar_mensaje(password,settings.ENCRYPTION_KEY)
+        user = Users.objects.filter(phone_number=phone, password_hash=password_hash).first()
         if user:
             user.is_online = 1
             user.status = "activo"

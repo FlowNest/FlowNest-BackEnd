@@ -85,11 +85,6 @@ class Messages(models.Model):
         if not self.timestamp:  # Si no hay timestamp asignado, usar la hora local
             self.timestamp = localtime(timezone.now())  # Esto convierte la hora UTC a la hora local
 
-        if self.content and not self.content.isspace():
-            # Solo cifrar si el contenido no está vacío o solo tiene espacios
-            encryption_key = settings.ENCRYPTION_KEY  # Toma la clave desde settings
-            self.content = cifrar_mensaje(self.content, encryption_key)
-
         super().save(*args, **kwargs)
     
 class Sessions(models.Model):
